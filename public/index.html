@@ -10,9 +10,7 @@
             user-select: none;
             box-sizing: border-box;
         }
-        .cell {
-    background: red !important;
-}
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: white;
@@ -134,6 +132,8 @@
             padding: 4px;
             border-radius: 8px;
         }
+
+/* ----- ФИНАЛЬНЫЕ СТИЛИ ДЛЯ КЛЕТОК, РАБОТАЮЩИЕ 100% ----- */
 .cell {
     background: white;
     aspect-ratio: 1 / 1;
@@ -146,23 +146,29 @@
     cursor: default;
     transition: 0.05s linear;
 }
+
+/* Стили для занятых клеток */
+.cell.taken {
+    cursor: not-allowed;
+}
+
+/* Уже расставленные X и O */
 .cell.x { color: #2196F3; background: white; }
 .cell.o { color: #F44336; background: white; }
-.cell.taken { cursor: not-allowed; }
-/* Подсветка и курсор только для доступных клеток */
+
+/* ЯВНОЕ правило для кликабельных клеток: и курсор, и подсветка */
 .cell:not(.taken):hover {
-    background: #e0e0e0;
-    transform: scale(0.96);
-    cursor: pointer;
+    background: #e0e0e0 !important;
+    transform: scale(0.96) !important;
+    cursor: pointer !important;
 }
-.cell:active:not(.taken) { transform: scale(0.96); }
-/* Если клетка не кликабельна (но и не taken) — нет подсветки и курсор по умолчанию */
+
+/* Чтобы не было путаницы, если клетка не taken и у неё почему-то нет указателя */
 .cell:not(.taken):not([style*="cursor: pointer"]):hover {
     background: white;
     transform: none;
     cursor: default;
 }
-
         
         .winner-overlay {
             position: absolute;
