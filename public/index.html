@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Гипер-крестики-нолики — онлайн</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
     <style>
         * {
             user-select: none;
@@ -139,8 +140,8 @@
             cursor: default;
             transition: 0.05s linear;
         }
-        .cell.x { color: #2196F3; }
-        .cell.o { color: #F44336; }
+        .cell.x { color: #2196F3; background: white; }
+        .cell.o { color: #F44336; background: white; }
         .cell.taken { cursor: not-allowed; }
         .cell:not(.taken):hover {
             background: #e0e0e0;
@@ -148,6 +149,11 @@
             cursor: pointer;
         }
         .cell:active:not(.taken) { transform: scale(0.96); }
+        .cell:not(.taken):not([style*="cursor: pointer"]):hover {
+            background: white;
+            transform: none;
+            cursor: default;
+        }
         .winner-overlay {
             position: absolute;
             top: 0;
@@ -162,6 +168,9 @@
             opacity: 0.35;
             pointer-events: none;
             z-index: 5;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: transparent;
+            border-radius: 12px;
         }
         .reset-btn {
             margin-top: 24px;
@@ -237,6 +246,78 @@
         .notation-list li {
             padding: 6px;
             border-bottom: 1px solid #eee;
+            font-family: 'Courier New', monospace;
+        }
+        @media (max-width: 700px) {
+            .app-container { flex-direction: column; }
+            .winner-overlay { font-size: 3em; }
+        }
+        .corner-image {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: auto;
+            height: auto;
+            max-width: 280px;
+            max-height: 400px;
+            z-index: 1000;
+            cursor: pointer;
+            opacity: 1;
+            transition: opacity 0.2s;
+        }
+        .west-decor {
+            position: absolute;
+            left: -130px;
+            top: 80%;
+            transform: translateY(-50%);
+            width: 170px;
+            height: auto;
+            z-index: 10;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        .east-decor {
+            position: absolute;
+            right: -100px;
+            top: 80%;
+            transform: translateY(-50%);
+            width: 140px;
+            height: auto;
+            z-index: 10;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        .tall-west-decor {
+            position: absolute;
+            left: -350px;
+            top: 60%;
+            transform: translateY(-50%);
+            width: 280px;
+            height: auto;
+            z-index: 10;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            mix-blend-mode: multiply;
+        }
+        .tall-east-decor {
+            position: absolute;
+            right: -350px;
+            top: 60%;
+            transform: translateY(-50%);
+            width: 280px;
+            height: auto;
+            z-index: 10;
+            pointer-events: none;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            mix-blend-mode: multiply;
         }
         .title-image-wrapper {
             text-align: center;
@@ -247,6 +328,23 @@
             max-width: 100%;
             height: auto;
             display: inline-block;
+        }
+        .footer {
+            margin-top: auto;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #ccc;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .footer a {
+            color: #990D66;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .footer a:hover {
+            text-decoration: underline;
         }
         .menu {
             text-align: center;
@@ -273,10 +371,6 @@
             background: #e3f2fd;
             padding: 8px;
             border-radius: 12px;
-        }
-        @media (max-width: 700px) {
-            .app-container { flex-direction: column; }
-            .winner-overlay { font-size: 3em; }
         }
     </style>
 </head>
@@ -313,7 +407,12 @@
             <div class="compass-label label-north">СЕВЕР</div>
             <div class="compass-label label-south">ЮГ</div>
             <div class="compass-label label-west">ЗАПАД</div>
+            <div class="compass-label label-west">ЗАПАД</div>
+            <img src="pojakonda.png" alt="Указатель" class="west-decor">
+            <img src="taksist.png" alt="Таксист" class="tall-west-decor">
             <div class="compass-label label-east">ВОСТОК</div>
+            <img src="penza.png" alt="Указатель" class="east-decor">
+            <img src="polithejskij.png" alt="Полицейский" class="tall-east-decor">
         </div>
         <div class="turn-hint" id="turnHint"></div>
         <button class="reset-btn" id="resetBtn">🔄 Новая игра</button>
@@ -327,6 +426,12 @@
         </ul>
     </div>
 </div>
+
+<footer class="footer">
+    Приложение создано творческим союзом <a href="https://sarcoscyphushka.github.io/glirarium/" rel="noopener noreferrer">Сони</a> и её умной и замечательной дипсицы, пожелавшей остаться анонимной.
+</footer>
+
+<img src="derevo.png" alt="Светофор!" class="corner-image">
 
 <script>
     // ----- ИГРОВОЕ СОСТОЯНИЕ -----
@@ -366,6 +471,18 @@
             container.appendChild(li);
         });
         container.scrollTop = container.scrollHeight;
+
+        const tallEast = document.querySelector('.tall-east-decor');
+        if (tallEast) {
+            const isOverflowing = container.scrollHeight > container.clientHeight;
+            if (isOverflowing || moveHistory.length >= 10) {
+                tallEast.style.opacity = '0';
+                tallEast.style.visibility = 'hidden';
+            } else {
+                tallEast.style.opacity = '1';
+                tallEast.style.visibility = 'visible';
+            }
+        }
     }
 
     function clearNotation() {
@@ -374,43 +491,39 @@
     }
 
     // ----- ЛОГИКА ИГРЫ -----
-   function checkSmallWin(bigIdx) {
-    if (bigLocked[bigIdx]) return bigWinner[bigIdx];
-    const grid = smallGrid[bigIdx];
-    for (let line of winLines) {
-        const [a,b,c] = line;
-        if (grid[a] && grid[a] === grid[b] && grid[a] === grid[c]) {
-            bigWinner[bigIdx] = grid[a];
-            bigLocked[bigIdx] = true;
-            if (grid[a] === 'X') scores[0]++;
-            else scores[1]++;
-            return grid[a];
-        }
-    }
-    return null;
-}
-    
-    function updateGame() {
-    // Проверяем только НЕзаблокированные квадраты
-    for (let i = 0; i < 9; i++) {
-        if (!bigLocked[i]) {
-            checkSmallWin(i);
-        }
-    }
-    
-    gameWinner = null;
-    if (scores[0] >= 5) gameWinner = 'X';
-    else if (scores[1] >= 5) gameWinner = 'O';
-    if (!gameWinner) {
+    function checkSmallWin(bigIdx) {
+        if (bigLocked[bigIdx]) return bigWinner[bigIdx];
+        const grid = smallGrid[bigIdx];
         for (let line of winLines) {
             const [a,b,c] = line;
-            if (bigWinner[a] && bigWinner[a] === bigWinner[b] && bigWinner[a] === bigWinner[c]) {
-                gameWinner = bigWinner[a];
-                break;
+            if (grid[a] && grid[a] === grid[b] && grid[a] === grid[c]) {
+                bigWinner[bigIdx] = grid[a];
+                bigLocked[bigIdx] = true;
+                if (grid[a] === 'X') scores[0]++;
+                else scores[1]++;
+                return grid[a];
+            }
+        }
+        return null;
+    }
+
+    function updateGame() {
+        for (let i = 0; i < 9; i++) {
+            if (!bigLocked[i]) checkSmallWin(i);
+        }
+        gameWinner = null;
+        if (scores[0] >= 5) gameWinner = 'X';
+        else if (scores[1] >= 5) gameWinner = 'O';
+        if (!gameWinner) {
+            for (let line of winLines) {
+                const [a,b,c] = line;
+                if (bigWinner[a] && bigWinner[a] === bigWinner[b] && bigWinner[a] === bigWinner[c]) {
+                    gameWinner = bigWinner[a];
+                    break;
+                }
             }
         }
     }
-}
 
     async function saveState() {
         if (!gameId) return;
@@ -422,25 +535,23 @@
         });
     }
 
-   async function loadState() {
-    if (!gameId) return;
-    const res = await fetch(`/api/get-state/${gameId}`);
-    if (res.ok) {
-        const state = await res.json();
-        smallGrid = state.smallGrid;
-        bigLocked = state.bigLocked;
-        currentPlayer = state.currentPlayer;
-        nextBig = state.nextBig;
-        gameWinner = state.gameWinner;
-        scores = state.scores;
-        moveHistory = state.moveHistory || [];
-        
-        bigWinner = state.bigWinner || Array(9).fill(null);
-        
-        updateNotationUI();
-        render();
+    async function loadState() {
+        if (!gameId) return;
+        const res = await fetch(`/api/get-state/${gameId}`);
+        if (res.ok) {
+            const state = await res.json();
+            smallGrid = state.smallGrid;
+            bigLocked = state.bigLocked;
+            currentPlayer = state.currentPlayer;
+            nextBig = state.nextBig;
+            gameWinner = state.gameWinner;
+            scores = state.scores;
+            moveHistory = state.moveHistory || [];
+            bigWinner = state.bigWinner || Array(9).fill(null);
+            updateNotationUI();
+            render();
+        }
     }
-}
 
     async function makeMove(bigIdx, smallIdx) {
         if (gameWinner) return;
@@ -487,10 +598,10 @@
         document.getElementById('currentTurnDisplay').innerHTML = `Сейчас ходит: X`;
         document.getElementById('menu').style.display = 'none';
         document.getElementById('gameArea').style.display = 'flex';
-        
+
         if (updateInterval) clearInterval(updateInterval);
         updateInterval = setInterval(loadState, 2000);
-        
+
         render();
         return true;
     }
@@ -500,7 +611,7 @@
         if (!container) return;
         container.innerHTML = '';
         const myTurn = myPlayer === (currentPlayer === 0 ? 'X' : 'O');
-        
+
         for (let big = 0; big < 9; big++) {
             const bigDiv = document.createElement('div');
             bigDiv.className = 'big-cell';
@@ -531,14 +642,14 @@
             bigDiv.appendChild(smallDiv);
             container.appendChild(bigDiv);
         }
-        
+
         document.getElementById('scoreX').innerText = scores[0];
         document.getElementById('scoreO').innerText = scores[1];
-        
+
         const statusDiv = document.getElementById('statusMsg');
         const turnDisplay = document.getElementById('currentTurnDisplay');
         const hintDiv = document.getElementById('turnHint');
-        
+
         if (gameWinner) {
             statusDiv.innerHTML = `🏆 ПОБЕДИЛ ${gameWinner} 🏆`;
             turnDisplay.innerHTML = `Игра окончена. Победил ${gameWinner}`;
@@ -564,10 +675,10 @@
         else alert('Введите код игры');
     };
     document.getElementById('resetBtn').onclick = async () => {
-        smallGrid = Array(9).fill().map(()=>Array(9).fill(null));
+        smallGrid = Array(9).fill().map(() => Array(9).fill(null));
         bigWinner = Array(9).fill(null);
         bigLocked = Array(9).fill(false);
-        scores = [0,0];
+        scores = [0, 0];
         currentPlayer = 0;
         nextBig = null;
         gameWinner = null;
@@ -575,6 +686,31 @@
         await saveState();
         render();
     };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const cornerImg = document.querySelector('.corner-image');
+        if (cornerImg) {
+            const img1 = 'derevo.png';
+            const img2 = 'ryba.png';
+            let isImg1 = true;
+            cornerImg.addEventListener('click', function() {
+                if (isImg1) {
+                    this.src = img2;
+                    this.style.width = '';
+                    this.style.height = '';
+                    this.style.maxWidth = '600px';
+                    this.style.maxHeight = '600px';
+                } else {
+                    this.src = img1;
+                    this.style.width = '';
+                    this.style.height = '';
+                    this.style.maxWidth = '';
+                    this.style.maxHeight = '';
+                }
+                isImg1 = !isImg1;
+            });
+        }
+    });
 </script>
 </body>
 </html>
