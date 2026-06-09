@@ -5,7 +5,7 @@ const port = 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
+app.use(express.static('public'));
 
 // ЭТА СТРОЧКА ГЛАВНАЯ — ОТДАЁМ index.html ПРИ ЗАХОДЕ НА ГЛАВНУЮ
 app.get('/', (req, res) => {
