@@ -156,18 +156,10 @@
 .cell.x { color: #2196F3; background: white; }
 .cell.o { color: #F44336; background: white; }
 
-/* ЯВНОЕ правило для кликабельных клеток: и курсор, и подсветка */
-.cell:not(.taken):hover {
+.cell.clickable:not(.taken):hover {
     background: #e0e0e0 !important;
     transform: scale(0.96) !important;
     cursor: pointer !important;
-}
-
-/* Чтобы не было путаницы, если клетка не taken и у неё почему-то нет указателя */
-.cell:not(.taken):not([style*="cursor: pointer"]):hover {
-    background: white;
-    transform: none;
-    cursor: default;
 }
         
         .winner-overlay {
@@ -655,9 +647,10 @@
                     cell.textContent = val;
                 } else {
                     cell.textContent = '';
-                    if (!gameWinner && myTurn && (nextBig === null || big === nextBig)) {
+                   if (!gameWinner && myTurn && (nextBig === null || big === nextBig)) {
                         cell.onclick = () => makeMove(big, small);
-                    }
+                           cell.classList.add('clickable');
+                }
                 }
                 smallDiv.appendChild(cell);
             }
@@ -696,18 +689,25 @@
         if (code) initGame(code);
         else alert('Введите код игры');
     };
-    document.getElementById('resetBtn').onclick = async () => {
-        smallGrid = Array(9).fill().map(() => Array(9).fill(null));
-        bigWinner = Array(9).fill(null);
-        bigLocked = Array(9).fill(false);
-        scores = [0, 0];
-        currentPlayer = 0;
-        nextBig = null;
-        gameWinner = null;
-        clearNotation();
-        await saveState();
-        render();
-    };
+   document.getElementById('resetBtn').onclick = async () => {
+    smallGrid = Array(9).fill().map(() => Array(9).fill(null));
+    bigWinner = Array(9).fill(null);
+    bigLocked = Array(9).fill(false);
+    scores = [0, 0];
+    currentPlayer = 0;
+    nextBig = null;
+    gameWinner = null;
+    clearNotation();
+    await saveState();
+    render();
+
+    // ВОЗВРАЩАЕМ ВЫСОКУЮ КАРТИНКУ, если она была скрыта
+    const tallEast = document.querySelector('.tall-east-decor');
+    if (tallEast) {
+        tallEast.style.opacity = '1';
+        tallEast.style.visibility = 'visible';
+    }
+};
 
     document.addEventListener('DOMContentLoaded', function() {
         const cornerImg = document.querySelector('.corner-image');
