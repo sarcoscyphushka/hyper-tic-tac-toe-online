@@ -16,7 +16,7 @@
             background: white;
             min-height: 100vh;
             margin: 0;
-             padding-left: 20px;
+            padding-left: 20px;
             padding-right: 20px;
             padding: 20px;
             display: flex;
@@ -133,35 +133,35 @@
             border-radius: 8px;
         }
 
-/* ----- ФИНАЛЬНЫЕ СТИЛИ ДЛЯ КЛЕТОК, РАБОТАЮЩИЕ 100% ----- */
-.cell {
-    background: white;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3em;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: default;
-    transition: 0.05s linear;
-}
+        /* ----- ФИНАЛЬНЫЕ СТИЛИ ДЛЯ КЛЕТОК, РАБОТАЮЩИЕ 100% ----- */
+        .cell {
+            background: white;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: default;
+            transition: 0.05s linear;
+        }
 
-/* Стили для занятых клеток */
-.cell.taken {
-    cursor: not-allowed;
-}
+        /* Стили для занятых клеток */
+        .cell.taken {
+            cursor: not-allowed;
+        }
 
-/* Уже расставленные X и O */
-.cell.x { color: #2196F3; background: white; }
-.cell.o { color: #F44336; background: white; }
+        /* Уже расставленные X и O */
+        .cell.x { color: #2196F3; background: white; }
+        .cell.o { color: #F44336; background: white; }
 
-.cell.clickable:not(.taken):hover {
-    background: #e0e0e0 !important;
-    transform: scale(0.96) !important;
-    cursor: pointer !important;
-}
-        
+        .cell.clickable:not(.taken):hover {
+            background: #e0e0e0 !important;
+            transform: scale(0.96) !important;
+            cursor: pointer !important;
+        }
+
         .winner-overlay {
             position: absolute;
             top: 0;
@@ -381,11 +381,12 @@
             border-radius: 12px;
         }
 
-          @media (min-width: 1400px) {
-        body {
-        padding-left: 60px;
-        padding-right: 60px;
-    }
+        @media (min-width: 1400px) {
+            body {
+                padding-left: 60px;
+                padding-right: 60px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -539,6 +540,12 @@
         }
     }
 
+    // Проверяет, есть ли в большом квадрате хотя бы одна свободная маленькая клетка
+    function hasFreeCells(bigIdx) {
+        if (!smallGrid[bigIdx]) return false;
+        return smallGrid[bigIdx].some(cell => cell === null);
+    }
+
     async function saveState() {
         if (!gameId) return;
         const state = { smallGrid, bigLocked, bigWinner, currentPlayer, nextBig, gameWinner, scores, moveHistory };
@@ -570,7 +577,14 @@
     async function makeMove(bigIdx, smallIdx) {
         if (gameWinner) return;
         if (myPlayer !== (currentPlayer === 0 ? 'X' : 'O')) { alert("Сейчас не ваш ход"); return; }
-        if (nextBig !== null && bigIdx !== nextBig) { alert(`Ходите в квадрат ${gridNames[nextBig]}`); return; }
+        
+        // Если указан следующий квадрат, но в нём уже нет свободных клеток — разрешаем ход в любой квадрат
+        const mustPlayInNext = nextBig !== null && hasFreeCells(nextBig);
+        if (mustPlayInNext && bigIdx !== nextBig) {
+            alert(`Ходите в квадрат ${gridNames[nextBig]}`);
+            return;
+        }
+        
         if (smallGrid[bigIdx][smallIdx] !== null) { alert("Занято"); return; }
 
         smallGrid[bigIdx][smallIdx] = myPlayer;
@@ -629,7 +643,13 @@
         for (let big = 0; big < 9; big++) {
             const bigDiv = document.createElement('div');
             bigDiv.className = 'big-cell';
-            if (!gameWinner && nextBig !== null && nextBig === big && myTurn) bigDiv.classList.add('highlight');
+            
+            // Подсвечиваем указанный квадрат, только если в нём есть свободные клетки
+            const highlightTarget = nextBig !== null && hasFreeCells(nextBig) ? nextBig : null;
+            if (!gameWinner && highlightTarget !== null && highlightTarget === big && myTurn) {
+                bigDiv.classList.add('highlight');
+            }
+            
             if (bigWinner[big]) {
                 const overlay = document.createElement('div');
                 overlay.className = 'winner-overlay';
@@ -647,10 +667,12 @@
                     cell.textContent = val;
                 } else {
                     cell.textContent = '';
-                   if (!gameWinner && myTurn && (nextBig === null || big === nextBig)) {
+                    // Если nextBig = null (первый ход) или в nextBig нет свободных клеток — можно кликать везде
+                    const freeChoice = nextBig === null || !hasFreeCells(nextBig);
+                    if (!gameWinner && myTurn && (freeChoice || big === nextBig)) {
                         cell.onclick = () => makeMove(big, small);
-                           cell.classList.add('clickable');
-                }
+                        cell.classList.add('clickable');
+                    }
                 }
                 smallDiv.appendChild(cell);
             }
@@ -673,11 +695,16 @@
             const mark = currentPlayer === 0 ? 'X' : 'O';
             if (myTurn) {
                 statusDiv.innerHTML = `🎯 Ваш ход (${myPlayer})`;
-                if (nextBig === null) hintDiv.innerHTML = `✨ Первый ход! Можно ходить в любой квадрат ✨`;
-                else hintDiv.innerHTML = `📌 Следующий квадрат: ${gridNames[nextBig]}`;
+                if (nextBig === null) {
+                    hintDiv.innerHTML = `✨ Первый ход! Можно ходить в любой квадрат ✨`;
+                } else if (!hasFreeCells(nextBig)) {
+                    hintDiv.innerHTML = `🔄 Квадрат ${gridNames[nextBig]} заполнен — можно ходить в любой квадрат!`;
+                } else {
+                    hintDiv.innerHTML = `📌 Следующий квадрат: ${gridNames[nextBig]}`;
+                }
             } else {
                 statusDiv.innerHTML = `⏳ Ход соперника (${mark})...`;
-                hintDiv.innerHTML = `📌 Следующий квадрат: ${gridNames[nextBig]}`;
+                hintDiv.innerHTML = nextBig !== null ? `📌 Следующий квадрат: ${gridNames[nextBig]}` : '';
             }
             turnDisplay.innerHTML = `Сейчас ходит: ${mark}`;
         }
@@ -689,25 +716,25 @@
         if (code) initGame(code);
         else alert('Введите код игры');
     };
-   document.getElementById('resetBtn').onclick = async () => {
-    smallGrid = Array(9).fill().map(() => Array(9).fill(null));
-    bigWinner = Array(9).fill(null);
-    bigLocked = Array(9).fill(false);
-    scores = [0, 0];
-    currentPlayer = 0;
-    nextBig = null;
-    gameWinner = null;
-    clearNotation();
-    await saveState();
-    render();
+    document.getElementById('resetBtn').onclick = async () => {
+        smallGrid = Array(9).fill().map(() => Array(9).fill(null));
+        bigWinner = Array(9).fill(null);
+        bigLocked = Array(9).fill(false);
+        scores = [0, 0];
+        currentPlayer = 0;
+        nextBig = null;
+        gameWinner = null;
+        clearNotation();
+        await saveState();
+        render();
 
-    // ВОЗВРАЩАЕМ ВЫСОКУЮ КАРТИНКУ, если она была скрыта
-    const tallEast = document.querySelector('.tall-east-decor');
-    if (tallEast) {
-        tallEast.style.opacity = '1';
-        tallEast.style.visibility = 'visible';
-    }
-};
+        // ВОЗВРАЩАЕМ ВЫСОКУЮ КАРТИНКУ, если она была скрыта
+        const tallEast = document.querySelector('.tall-east-decor');
+        if (tallEast) {
+            tallEast.style.opacity = '1';
+            tallEast.style.visibility = 'visible';
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', function() {
         const cornerImg = document.querySelector('.corner-image');
