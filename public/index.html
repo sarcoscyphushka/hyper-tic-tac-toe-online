@@ -11,6 +11,16 @@
             box-sizing: border-box;
         }
 
+        /* Разрешаем выделение и копирование для кода игры */
+            #gameInfo, #gameInfo * {
+            user-select: text;
+        }
+
+        /* Разрешаем выделение и копирование для нотации */
+            #notationList, #notationList * {
+            user-select: text;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: white;
