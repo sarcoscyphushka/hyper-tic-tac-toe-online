@@ -523,22 +523,47 @@
     }
 
     function updateGame() {
-        for (let i = 0; i < 9; i++) {
-            if (!bigLocked[i]) checkSmallWin(i);
-        }
-        gameWinner = null;
-        if (scores[0] >= 5) gameWinner = 'X';
-        else if (scores[1] >= 5) gameWinner = 'O';
-        if (!gameWinner) {
-            for (let line of winLines) {
-                const [a,b,c] = line;
-                if (bigWinner[a] && bigWinner[a] === bigWinner[b] && bigWinner[a] === bigWinner[c]) {
-                    gameWinner = bigWinner[a];
-                    break;
-                }
-            }
+    // Проверяем только НЕзаблокированные квадраты
+    for (let i = 0; i < 9; i++) {
+        if (!bigLocked[i]) checkSmallWin(i);
+    }
+
+    gameWinner = null;
+
+    // 1. Победа по трём в ряд — всегда срабатывает
+    for (let line of winLines) {
+        const [a,b,c] = line;
+        if (bigWinner[a] && bigWinner[a] === bigWinner[b] && bigWinner[a] === bigWinner[c]) {
+            gameWinner = bigWinner[a];
+            return;
         }
     }
+
+    // 2. Проверяем, возможна ли ещё хотя бы одна тройка в ряд
+    // (линия, где все три квадрата ещё не заблокированы)
+    let anyLinePossible = false;
+    for (let line of winLines) {
+        const [a,b,c] = line;
+        if (!bigLocked[a] && !bigLocked[b] && !bigLocked[c]) {
+            anyLinePossible = true;
+            break;
+        }
+    }
+
+    // 3. Если тройка в ряд уже невозможна — победа по 5 квадратам
+    if (!anyLinePossible) {
+        if (scores[0] >= 5) gameWinner = 'X';
+        else if (scores[1] >= 5) gameWinner = 'O';
+    }
+
+    // 4. Если все квадраты заполнены — побеждает тот, у кого больше
+    const allFilled = bigLocked.every(locked => locked);
+    if (allFilled && !gameWinner) {
+        if (scores[0] > scores[1]) gameWinner = 'X';
+        else if (scores[1] > scores[0]) gameWinner = 'O';
+        // если равны — ничья, gameWinner остаётся null
+    }
+}
 
     // Проверяет, есть ли в большом квадрате хотя бы одна свободная маленькая клетка
     function hasFreeCells(bigIdx) {
