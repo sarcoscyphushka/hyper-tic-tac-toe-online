@@ -522,8 +522,7 @@
         return null;
     }
 
-    function updateGame() {
-    // Проверяем только НЕзаблокированные квадраты
+function updateGame() {
     for (let i = 0; i < 9; i++) {
         if (!bigLocked[i]) checkSmallWin(i);
     }
@@ -540,11 +539,14 @@
     }
 
     // 2. Проверяем, возможна ли ещё хотя бы одна тройка в ряд
-    // (линия, где все три квадрата ещё не заблокированы)
+    // Линия возможна, если в ней нет заблокированных квадратов разных игроков
     let anyLinePossible = false;
     for (let line of winLines) {
         const [a,b,c] = line;
-        if (!bigLocked[a] && !bigLocked[b] && !bigLocked[c]) {
+        const winners = [bigWinner[a], bigWinner[b], bigWinner[c]].filter(w => w !== null);
+        const uniqueWinners = [...new Set(winners)];
+        // Если в линии есть квадраты, принадлежащие обоим игрокам — линия невозможна
+        if (uniqueWinners.length <= 1) {
             anyLinePossible = true;
             break;
         }
@@ -561,7 +563,6 @@
     if (allFilled && !gameWinner) {
         if (scores[0] > scores[1]) gameWinner = 'X';
         else if (scores[1] > scores[0]) gameWinner = 'O';
-        // если равны — ничья, gameWinner остаётся null
     }
 }
 
